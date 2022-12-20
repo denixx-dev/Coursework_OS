@@ -2,7 +2,7 @@ from tkinter import *
 import socket
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 8000  # The port used by the server
-PORT2 = 8001
+PORT2 = 8888
 def main():
     # window_client = Tk()
     # window_client.title("Server 1")

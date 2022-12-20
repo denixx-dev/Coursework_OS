@@ -1,4 +1,5 @@
 import datetime
+import multiprocessing
 import sys
 from tkinter import *
 import socket
@@ -8,7 +9,8 @@ from time import gmtime, strftime
 from _thread import start_new_thread
 import threading
 from datetime import time
-
+import concurrent.futures as f
+from multiprocessing import Process
 import itertools
 
 
@@ -16,9 +18,37 @@ import itertools
 # server1_socket()
 # create_window()
 
+def test(user):
+    hostname = socket.gethostname()
+    username = getpass.getuser()
+    while True:
+        # user, address = server1.accept()
+        # При успешном подключении клиента посылаем ему сообщение
+        user.sendall("Client connected to server 1\n"
+                     f"Hostname is {hostname}\n"
+                     f"Username is {username}\n".encode("utf-8"))
+        # user.sendall(f"Hostname is {hostname}\n".encode("utf-8"))
+        # user.sendall(f"Username is {username}\n".encode("utf-8"))
+
+        # Принимаем от него сообщение
+        data = user.recv(1024).decode("utf-8")
+        print(f"{data}")
+    user.close()
 
 
-def threaded(user, window_server1):
+
+def threaded(user):
+    # Создаем окно
+    window_server1 = Tk()
+    window_server1.title("Server 1")
+    window_server1.geometry('400x250')
+    window_server1.update()
+
+    # Добавляем текст ожидания подключения клиента
+    label1 = Label(window_server1, text="Waiting for client to connect...")
+    label1.grid(column=0, row=0)
+    window_server1.update()
+
     # Получаем имя компьютера и пользователя
     hostname = socket.gethostname()
     username = getpass.getuser()
@@ -52,6 +82,7 @@ def threaded(user, window_server1):
         print(f"active connections: {threading.activeCount()-1}")
         window_server1.update()
     user.close()
+    window_server1.mainloop()
     return 0
 
 def main():
@@ -61,11 +92,7 @@ def main():
     except:
         sys.exit()
 
-    # Создаем окно
-    window_server1 = Tk()
-    window_server1.title("Server 1")
-    window_server1.geometry('400x250')
-    window_server1.update()
+
 
     #Устанавливаем адрес и порт
     HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
@@ -81,25 +108,21 @@ def main():
     server1.bind((HOST, PORT))
     server1.listen()
 
-    # Добавляем текст ожидания подключения клиента
-    label1 = Label(window_server1, text="Waiting for client to connect...")
-    label1.grid(column=0, row=0)
-    window_server1.update()
+
     while True:
         user, address = server1.accept()
-        thread = threading.Thread(target=threaded, args = (user, window_server1))
-        thread.start()
+        # thread = threading.Thread(target=threaded, args = (user, window_server1))
+        # thread.start()
+        # thread = f.ThreadPoolExecutor(max_workers=2)
+        # thread.submit(threaded)
+        # start_new_thread(test, (user,))
+        start_new_thread(threaded, (user, ))
+        # multiprocessing.Process(target=threaded, args=(user, window_server1))
 
-        window_server1.mainloop()
-        break
+        # break
     server1.close()
     return 0
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
+    # p = Process(target = threaded, args(user, window_server1))
