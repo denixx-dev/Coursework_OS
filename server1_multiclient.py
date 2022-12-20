@@ -8,81 +8,90 @@ from tendo import singleton
 from time import gmtime, strftime
 from _thread import start_new_thread
 import threading
-from datetime import time
+import time
 import concurrent.futures as f
 from multiprocessing import Process
 import itertools
 
 
-
+FORMAT = "utf-8"
 # server1_socket()
 # create_window()
 
-def test(user):
-    hostname = socket.gethostname()
-    username = getpass.getuser()
-    while True:
-        # user, address = server1.accept()
-        # При успешном подключении клиента посылаем ему сообщение
-        user.sendall("Client connected to server 1\n"
-                     f"Hostname is {hostname}\n"
-                     f"Username is {username}\n".encode("utf-8"))
-        # user.sendall(f"Hostname is {hostname}\n".encode("utf-8"))
-        # user.sendall(f"Username is {username}\n".encode("utf-8"))
-
-        # Принимаем от него сообщение
-        data = user.recv(1024).decode("utf-8")
-        print(f"{data}")
-    user.close()
+# def test(user):
+#     hostname = socket.gethostname()
+#     username = getpass.getuser()
+#     while True:
+#         # user, address = server1.accept()
+#         # При успешном подключении клиента посылаем ему сообщение
+#         user.sendall("Client connected to server 1\n"
+#                      f"Hostname is {hostname}\n"
+#                      f"Username is {username}\n".encode("utf-8"))
+#         # user.sendall(f"Hostname is {hostname}\n".encode("utf-8"))
+#         # user.sendall(f"Username is {username}\n".encode("utf-8"))
+#
+#         # Принимаем от него сообщение
+#         data = user.recv(1024).decode("utf-8")
+#         print(f"{data}")
+#     user.close()
 
 
 
 def threaded(user):
-    # Создаем окно
-    window_server1 = Tk()
-    window_server1.title("Server 1")
-    window_server1.geometry('400x250')
-    window_server1.update()
-
-    # Добавляем текст ожидания подключения клиента
-    label1 = Label(window_server1, text="Waiting for client to connect...")
-    label1.grid(column=0, row=0)
-    window_server1.update()
-
     # Получаем имя компьютера и пользователя
     hostname = socket.gethostname()
     username = getpass.getuser()
+
     while True:
-        # user, address = server1.accept()
-        # При успешном подключении клиента посылаем ему сообщение
-        user.sendall("Client connected to server 1\n"
-                    f"Hostname is {hostname}\n"
-                    f"Username is {username}\n".encode("utf-8"))
-        # user.sendall(f"Hostname is {hostname}\n".encode("utf-8"))
-        # user.sendall(f"Username is {username}\n".encode("utf-8"))
+        # Принимаем от клиента команду на вывод хоста и юзера
+        command_choose = user.recv(1024).decode(FORMAT)
+        if command_choose == "1":
+            # user, address = server1.accept()
+            # При успешном подключении клиента посылаем ему сообщение
+            user.sendall("Client connected to server 1\n"
+                        f"Hostname is {hostname, strftime('%H:%M:%S', gmtime())}\n"
+                        f"Username is {username, strftime('%H:%M:%S', gmtime())}\n".encode("utf-8"))
+            # user.sendall(f"Hostname is {hostname}\n".encode("utf-8"))
+            # user.sendall(f"Username is {username}\n".encode("utf-8"))
+        elif command_choose == "2":
+            # Создаем окно
+            window_server1 = Tk()
+            window_server1.title("Server 1")
+            window_server1.geometry('400x250')
+            window_server1.update()
 
-        # Принимаем от него сообщение
-        data = user.recv(1024).decode("utf-8")
+            # Добавляем текст ожидания подключения клиента
+            label1 = Label(window_server1, text="Waiting for client to connect...")
+            label1.grid(column=0, row=0)
+            window_server1.update()
 
-        # По принятии сообщения создаем новый текст в окне
-        label2 = Label(window_server1, text=f"{data}")
-        label2.grid(column=0, row=1)
+            # Принимаем от него сообщение о подключении
+            data = user.recv(1024).decode("utf-8")
 
-        window_server1.update()
+            # По принятии сообщения создаем новый текст в окне
+            label2 = Label(window_server1, text=f"{data}")
+            label2.grid(column=0, row=1)
 
-        # Принимаем координаты от клиента
-        coords = user.recv(1024).decode("utf-8")
-        coords = list(map(int, coords.split(" ")))
-        if coords[0] == 0:
+            window_server1.update()
+
+            # Принимаем координаты от клиента
+            coords = user.recv(1024).decode("utf-8")
+            coords = list(map(int, coords.split(" ")))
+            if coords[0] == 0:
+                window_server1.destroy()
+                break
+            # label3 = Label(window_server1, text=f"{coords}")
+            # label3.grid(column=0, row=2)
+            window_server1.geometry(f'400x250+{coords[0]}+{coords[1]}')
+            print(f"active connections: {threading.activeCount()-1}")
+            window_server1.update()
+            time.sleep(4)
             window_server1.destroy()
+            window_server1.mainloop()
+        else:
             break
-        # label3 = Label(window_server1, text=f"{coords}")
-        # label3.grid(column=0, row=2)
-        window_server1.geometry(f'400x250+{coords[0]}+{coords[1]}')
-        print(f"active connections: {threading.activeCount()-1}")
-        window_server1.update()
     user.close()
-    window_server1.mainloop()
+
     return 0
 
 def main():
@@ -120,7 +129,7 @@ def main():
         # multiprocessing.Process(target=threaded, args=(user, window_server1))
 
         # break
-    server1.close()
+
     return 0
 
 if __name__ == "__main__":

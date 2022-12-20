@@ -5,12 +5,29 @@ from tendo import singleton
 from _thread import start_new_thread
 import threading
 import psutil
+import time
+from time import gmtime, strftime
+import os.path
 
+FORMAT = "utf-8"
 
 def threaded(user):
-    while True:
-        p = psutil.Process(pid=None)
-        user.sendall(f"Server 2 priority: {p.nice()}".encode("utf-8"))
+    try:
+        while True:
+            command_choose = user.recv(1024).decode(FORMAT)
+            if command_choose == "1":
+                print("Client connected")
+                p = psutil.Process(pid=None)
+                user.sendall(f"Server 2 priority: "
+                             f"{p.nice(), strftime('%H:%M:%S', gmtime())}".encode("utf-8"))
+            elif command_choose == "2":
+                sqm = os.path.exists("C:/windows/WinSxS/amd64_microsoft-windows-sqm-consolidator-base_31bf3856ad364e35_6.3.9600.17031_none_c530be3835686aa5/wsqmcons.exe")
+                sqm = str(sqm)+str(strftime(' %H:%M:%S', gmtime()))
+                user.sendall(sqm.encode(FORMAT))
+
+    except:
+        time.sleep(3)
+        print("Client disconnected\n")
     user.close()
 
 def main():
